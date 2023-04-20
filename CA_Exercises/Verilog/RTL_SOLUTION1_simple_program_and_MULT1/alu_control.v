@@ -3,7 +3,6 @@
 
 module alu_control(
       input wire       func7_5,
-      input wire       func7_0,
       input wire [2:0] func3,
 		input wire [1:0] alu_op,
 		output reg [3:0] alu_control
@@ -25,21 +24,19 @@ module alu_control(
    parameter [3:0] SRL_OP        = 4'd4;
    parameter [3:0] SUB_OP        = 4'd6;
    parameter [3:0] SLT_OP        = 4'd7;
-   parameter [3:0] MUL_OP        = 4'd8;
 
 
    //The decoding of the instruction funtion field into the desired
    //alu operation can be found in Figure 4.12 of the Patterson Book,
    //section 4.4
-   wire [4:0] function_field = {func7_5, func7_0, func3}; // X_Y means that you look for the number with X bits and you count from 0 from the LSB until Y and you take only the Y bit
-   parameter [4:0] FUNC_ADD      = 5'b00000;
-   parameter [4:0] FUNC_SUB      = 5'b10000;
-   parameter [4:0] FUNC_AND      = 5'b00111;
-   parameter [4:0] FUNC_OR       = 5'b10110;
-   parameter [4:0] FUNC_SLT      = 5'b01010;
-   parameter [4:0] FUNC_SLL      = 5'b01001;
-   parameter [4:0] FUNC_SRL      = 5'b01101;
-   parameter [4:0] FUNC_MUL      = 5'b01000;
+   wire [3:0] function_field = {func7_5, func3};
+   parameter [3:0] FUNC_ADD      = 4'b0000;
+   parameter [3:0] FUNC_SUB      = 4'b1000;
+   parameter [3:0] FUNC_AND      = 4'b0111;
+   parameter [3:0] FUNC_OR       = 4'b0110;
+   parameter [3:0] FUNC_SLT      = 4'b0010;
+   parameter [3:0] FUNC_SLL      = 4'b0001;
+   parameter [3:0] FUNC_SRL      = 4'b0101;
 
 	reg [3:0] rtype_op;
    
@@ -52,8 +49,7 @@ module alu_control(
 		   FUNC_SLT	:  rtype_op = SLT_OP;
 		   FUNC_SLL	:  rtype_op = SLL_OP;
 		   FUNC_SRL	:  rtype_op = SRL_OP;
-         FUNC_MUL	:  rtype_op = MUL_OP;
-			default:    rtype_op = 5'd0;
+			default:    rtype_op = 4'd0;
 		endcase
 	end
 
