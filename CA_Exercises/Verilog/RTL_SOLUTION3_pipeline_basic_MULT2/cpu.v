@@ -38,16 +38,34 @@ module cpu(
 
    );
 
-wire              zero_flag;
 
 
+
+
+// IF
+// Instruction memory outputs
+wire [      31:0] instruction;
+
+// PC outputs 
 wire [      63:0] updated_pc;
 wire [      63:0] current_pc;
-wire [      63:0] jump_pc;
 
 
- 
-//Control Unit Outputs
+
+
+
+// REG IFID_PC outputs
+wire  [63:0]   ID_pc; // for in ID
+
+// REG IFID_Instruction outputs
+wire [31:0]    ID_instruction;
+
+
+
+
+
+// ID
+// Control Unit outputs
 wire           reg_dst;
 wire           branch;
 wire           mem_read;
@@ -58,34 +76,174 @@ wire           reg_write;
 wire           jump;
 wire [       1:0] alu_op;
 
-// REG IFID outputs
-wire  [63:0]   decode_pc;//from ID to EX
-wire [31:0]    instruction_IF_ID;
+// Register file outputs
+wire [      63:0] regfile_rdata_1,regfile_rdata_2;
 
-// REG IDEX outputs
-wire  [9:0 ]   Reg_CU_out;
-wire  [63:0]   execute_pc_input;//from ID to EX
-wire  [105:0]  instruction_ID_IX;
 
-// REG EXMEM outputs
-wire [      63:0] branch_pc;
-wire [      63:0] branch_EXMEM_pc;
-wire [5:0]        Reg_EXMEM_out;
-wire [37:0]       instruction_EX_MEM;
-
-// REG MEMWB outputs
-wire [1:0]     Reg_MEMWB_out;
-wire [84:0]    instruction_MEM_WB;
-
-wire [      31:0] instruction;
-
-wire [       3:0] alu_control;
-wire [       4:0] regfile_waddr;
-wire [      63:0] regfile_wdata,mem_data,alu_out,
-                  regfile_rdata_1,regfile_rdata_2,
-                  alu_operand_2;
-
+// Immediate extended unit outputs
 wire signed [63:0] immediate_extended;
+
+
+
+
+
+
+// REG IDEX_aluop outputs
+wire [       1:0] EX_alu_op;
+
+// REG IDEX_regdst outputs
+wire           EX_reg_dst;
+
+// REG IDEX_branch outputs
+wire           EX_branch;
+
+// REG IDEX_memread outputs
+wire           EX_mem_read;
+
+// REG IDEX_mem2reg outputs
+wire           EX_mem_2_reg;
+
+// REG IDEX_memwrite outputs
+wire           EX_mem_write;
+
+// REG IDEX_alusrc outputs
+wire           EX_alu_src;
+
+// REG IDEX_regwrite outputs
+wire           EX_reg_write;
+
+// REG IDEX_jump outputs
+wire           EX_jump;
+
+// REG IDEX_PC outputs
+wire  [63:0]   EX_pc; // for in EX
+
+// REG IDEX_readdata1 outputs
+wire [      63:0] EX_regfile_rdata_1;
+
+// REG IDEX_readdata2 outputs
+wire [      63:0] EX_regfile_rdata_2;
+
+// REG IDEX_immediate outputs
+wire signed [63:0] EX_immediate_extended;
+
+// REG IDEX_func75 outputs
+wire           EX_func75;
+
+// REG IDEX_func70 outputs
+wire           EX_func70;
+
+// REG IDEX_func3 outputs
+wire [      2:0] EX_func3;
+
+// REG IDEX_waddr outputs
+wire [      4:0] EX_waddr;
+
+
+
+
+
+
+// EX
+// Branch unit outputs
+wire [      63:0] branch_pc;
+wire [      63:0] jump_pc;
+
+// alu_operand_mux outputs
+wire [      63:0] alu_operand_2;
+
+// alu outputs
+wire [      63:0] alu_out;
+wire              zero_flag;
+
+// alu_ctrl outputs
+wire [       3:0] alu_control;
+
+
+
+
+
+
+// REG EXMEM_regdst outputs
+wire           MEM_reg_dst;
+
+// REG EXMEM_branch outputs
+wire           MEM_branch;
+
+// REG EXMEM_memread outputs
+wire           MEM_mem_read;
+
+// REG EXMEM_mem2reg outputs
+wire           MEM_mem_2_reg;
+
+// REG EXMEM_memwrite outputs
+wire           MEM_mem_write;
+
+// REG EXMEM_regwrite outputs
+wire           MEM_reg_write;
+
+// REG EXMEM_jump outputs
+wire           MEM_jump;
+
+// REG EXMEM_PC outputs
+wire  [63:0]   MEM_pc; // for in MEM
+
+// REG EXMEM_zero outputs
+wire           MEM_zero_flag;
+
+// REG EXMEM_aluout outputs
+wire [      63:0] MEM_alu_out;
+
+// REG EXMEM_readdata2 outputs
+wire [      63:0] MEM_regfile_rdata_2;
+
+// REG EXMEM_waddr outputs
+wire [      4:0] MEM_waddr;
+
+
+
+
+
+
+// MEM
+// Data memory outputs
+wire [      63:0] MEM_mem_data;
+
+
+
+
+
+
+// REG MEMWB_regdst outputs
+wire           WB_reg_dst;
+
+// REG MEMWB_mem2reg outputs
+wire           WB_mem_2_reg;
+
+// REG MEMWB_regwrite outputs
+wire           WB_reg_write;
+
+// REG MEMWB_mem_data outputs
+wire [   63:0] WB_mem_data;
+
+// REG MEMWB_aluout outputs
+wire [   63:0] WB_alu_out;
+
+// REG MEMWB_waddr outputs
+wire [    4:0] WB_waddr;
+
+
+
+
+
+
+// WB
+// Regfile_data_mux
+wire [      63:0] WB_regfile_wdata;
+
+
+
+
 
 
 
@@ -94,13 +252,13 @@ wire signed [63:0] immediate_extended;
 pc #(
    .DATA_W(64)
 ) program_counter (
-   .clk       (clk       ),
-   .arst_n    (arst_n    ),
-   .branch_pc (branch_pc ),
-   .jump_pc   (jump_pc   ),
-   .zero_flag (instruction_EX_MEM[37] ),
-   .branch    (Reg_EXMEM_out[5]    ),
-   .jump      (Reg_EXMEM_out[0]      ),
+   .clk       (clk),
+   .arst_n    (arst_n),
+   .branch_pc (branch_pc),
+   .jump_pc   (jump_pc),
+   .zero_flag (MEM_zero_flag),
+   .branch    (MEM_branch),
+   .jump      (MEM_jump),
    .current_pc(current_pc),
    .enable    (enable    ),
    .updated_pc(updated_pc)
@@ -126,6 +284,11 @@ sram_BW32 #(
 
 
 
+
+
+
+
+
 //IF_ID Reg Begin
 //PC Reg
 reg_arstn_en#(
@@ -135,7 +298,7 @@ reg_arstn_en#(
    .arst_n (arst_n),
    .din (updated_pc),
    .en(enable),
-   .dout(decode_pc)
+   .dout(ID_pc)
 );
 //Instruction reg
 reg_arstn_en#(
@@ -145,17 +308,22 @@ reg_arstn_en#(
    .arst_n (arst_n),
    .din (instruction),
    .en(enable),
-   .dout(instruction_IF_ID)
+   .dout(ID_instruction)
 );
 //IF_ID Reg End
 
 
 
 
+
+
+
+
+
 //ID Stage Begin
 control_unit control_unit(
-   .opcode   (instruction_IF_ID[6:0]),
-   .alu_op   (aluimmediate_extended_op          ),
+   .opcode   (ID_instruction[6:0]),
+   .alu_op   (alu_op          ),
    .reg_dst  (reg_dst         ),
    .branch   (branch          ),
    .mem_read (mem_read        ),
@@ -169,19 +337,19 @@ control_unit control_unit(
 register_file #(
    .DATA_W(64)
 ) register_file(
-   .clk      (clk               ),
-   .arst_n   (arst_n            ),
-   .reg_write(Reg_MEMWB_out[0]         ),
-   .raddr_1  (instruction_IF_ID[19:15]),
-   .raddr_2  (instruction_IF_ID[24:20]),
-   .waddr    (instruction_MEM_WB[4:0] ),
-   .wdata    (regfile_wdata     ),
+   .clk      (clk),
+   .arst_n   (arst_n),
+   .reg_write(WB_reg_write),
+   .raddr_1  (ID_instruction[19:15]),
+   .raddr_2  (ID_instruction[24:20]),
+   .waddr    (WB_waddr),
+   .wdata    (WB_regfile_wdata),
    .rdata_1  (regfile_rdata_1   ),
    .rdata_2  (regfile_rdata_2   )
 );
 
 immediate_extend_unit immediate_extend_u(
-    .instruction         (instruction_IF_ID),
+    .instruction         (ID_instruction),
     .immediate_extended  (immediate_extended)
 );
 // ID Stage End
@@ -189,120 +357,393 @@ immediate_extend_unit immediate_extend_u(
 
 
 
+
+
+
+
+
 // ID_EX_REG Begin
-// Control Reg
+// REG IDEX_aluop outputs
 reg_arstn_en#(
-   .DATA_W(10) // width of the forwarded signal
-)control_pipe_ID_EX(
+   .DATA_W(2) // width of the forwarded signal
+)IDEX_aluop(
    .clk (clk),
    .arst_n (arst_n),
-   .din ({reg_dst,branch,mem_read,mem_2_reg,mem_write,alu_src,reg_write,jump,alu_op}),
+   .din (alu_op),
    .en(enable),
-   .dout(Reg_CU_out)
+   .dout(EX_alu_op)
 );
-// PC Reg
+
+// REG IDEX_regdst outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_regdst(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (reg_dst),
+   .en(enable),
+   .dout(EX_reg_dst)
+);
+
+// REG IDEX_branch outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_branch(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (branch),
+   .en(enable),
+   .dout(EX_branch)
+);
+
+// REG IDEX_memread outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_memread(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (mem_read),
+   .en(enable),
+   .dout(EX_mem_read)
+);
+
+// REG IDEX_mem2reg outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_mem2reg(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (mem_2_reg),
+   .en(enable),
+   .dout(EX_mem_2_reg)
+);
+
+// REG IDEX_memwrite outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_memwrite(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (mem_write),
+   .en(enable),
+   .dout(EX_mem_write)
+);
+
+// REG IDEX_alusrc outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_alusrc(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (alu_src),
+   .en(enable),
+   .dout(EX_alu_src)
+);
+
+// REG IDEX_regwrite outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_regwrite(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (reg_write),
+   .en(enable),
+   .dout(EX_reg_write)
+);
+
+// REG IDEX_jump outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_jump(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (jump),
+   .en(enable),
+   .dout(EX_jump)
+);
+
+// REG IDEX_PC outputs
 reg_arstn_en#(
    .DATA_W(64) // width of the forwarded signal
-)pc_pipe_ID_EX(
+)IDEX_PC(
    .clk (clk),
    .arst_n (arst_n),
-   .din (decode_pc),
+   .din (ID_pc),
    .en(enable),
-   .dout(execute_pc_input)
+   .dout(EX_pc)
 );
-// Instruction Reg
+
+// REG IDEX_readdata1 outputs
 reg_arstn_en#(
-   .DATA_W(106) // width of the forwarded signal
-)signal_pipe_ID_EX(
+   .DATA_W(64) // width of the forwarded signal
+)IDEX_readdata1(
    .clk (clk),
    .arst_n (arst_n),
-   // regfile_rdata_1,regfile_rdata_2,immediate_extended,instruction_IF_ID[30],instruction_IF_ID[25],instruction_IF_ID[14:12],instruction_IF_ID[11:7]
-   // from instruction_IF_ID
-   .din ({regfile_rdata_1,regfile_rdata_2,immediate_extended,instruction_IF_ID[30],instruction_IF_ID[25],instruction_IF_ID[14:12],instruction_IF_ID[11:7]}),
+   .din (regfile_rdata_1),
    .en(enable),
-   .dout(instruction_ID_IX)
+   .dout(EX_regfile_rdata_1)
+);
+
+// REG IDEX_readdata2 outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)IDEX_readdata2(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (regfile_rdata_2),
+   .en(enable),
+   .dout(EX_regfile_rdata_2)
+);
+
+// REG IDEX_immediate outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)IDEX_immediate(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (immediate_extended),
+   .en(enable),
+   .dout(EX_immediate_extended)
+);
+
+// REG IDEX_func75 outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_func75(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (ID_instruction[30]),
+   .en(enable),
+   .dout(EX_func75)
+);
+
+// REG IDEX_func70 outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)IDEX_func70(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (ID_instruction[25]),
+   .en(enable),
+   .dout(EX_func70)
+);
+
+// REG IDEX_func3 outputs
+reg_arstn_en#(
+   .DATA_W(3) // width of the forwarded signal
+)IDEX_func3(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (ID_instruction[14:12]),
+   .en(enable),
+   .dout(EX_func3)
+);
+
+// REG IDEX_waddr outputs
+reg_arstn_en#(
+   .DATA_W(5) // width of the forwarded signal
+)IDEX_waddr(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (ID_instruction[11:7]),
+   .en(enable),
+   .dout(EX_waddr)
 );
 // ID_EX_REG End
+
+
+
+
+
+
+
 
 
 // EX STAGE BEGIN
 branch_unit#(
    .DATA_W(64)
 )branch_unit(
-   .updated_pc         (execute_pc_input        ),
-   .immediate_extended (instruction_ID_IX[73:10]),
-   .branch_pc          (branch_EXMEM_pc         ),
-   .jump_pc            (jump_pc           )
+   .updated_pc         (EX_pc),
+   .immediate_extended (EX_immediate_extended),
+   .branch_pc          (branch_pc),
+   .jump_pc            (jump_pc)
 );
 
 mux_2 #(
    .DATA_W(64)
 ) alu_operand_mux (
-   .input_a (instruction_ID_IX[73:10]),
-   .input_b (instruction_ID_IX[89:74]    ),
-   .select_a(Reg_CU_out[4]           ),
-   .mux_out (alu_operand_2     )
+   .input_a (EX_immediate_extended),
+   .input_b (EX_regfile_rdata_2),
+   .select_a(EX_alu_src),
+   .mux_out (alu_operand_2)
 );
 
 alu#(
    .DATA_W(64)
 ) alu(
-   .alu_in_0 (instruction_ID_IX[105:90] ),
-   .alu_in_1 (alu_operand_2   ),
-   .alu_ctrl (alu_control     ),
-   .alu_out  (alu_out         ),
-   .zero_flag(zero_flag       ),
-   .overflow (                )
+   .alu_in_0 (EX_regfile_rdata_1),
+   .alu_in_1 (alu_operand_2),
+   .alu_ctrl (alu_control),
+   .alu_out  (alu_out),
+   .zero_flag(zero_flag),
+   .overflow ()
 );
 
 alu_control alu_ctrl(
-   .func7_5       (instruction_ID_IX[9]   ),
-   .func7_0       (instruction_ID_IX[8]  ),
-   .func3          (instruction_ID_IX[7:5]),
-   .alu_op         (Reg_CU_out[1:0]             ),
-   .alu_control    (alu_control       )
+   .func7_5       (EX_func75),
+   .func7_0       (EX_func70),
+   .func3          (EX_func3),
+   .alu_op         (EX_alu_op),
+   .alu_control    (alu_control)
 );
 //EX STAGE END
 
 
 
 
+
+
+
+
+
 //EX_MEM REG BEGIN
-// Control Reg
+// REG EXMEM_regdst outputs
 reg_arstn_en#(
-   .DATA_W(6) // width of the forwarded signal
-)control_pipe_EX_MEM(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_regdst(
    .clk (clk),
    .arst_n (arst_n),
-   // branch,mem_read,mem_2_reg,mem_write,reg_write,jump from 
-   // reg_dst,branch,mem_read,mem_2_reg,mem_write,alu_src,reg_write,jump,alu_op[1:0] (9:0)
-   .din ({Reg_CU_out[8:5],Reg_CU_out[3:2]}), 
+   .din (EX_reg_dst), 
    .en(enable),
-   .dout(Reg_EXMEM_out)
+   .dout(MEM_reg_dst)
 );
-// PC Reg
+
+// REG EXMEM_branch outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_branch(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_branch), 
+   .en(enable),
+   .dout(MEM_branch)
+);
+
+// REG EXMEM_memread outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_memread(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_mem_read), 
+   .en(enable),
+   .dout(MEM_mem_read)
+);
+
+// REG EXMEM_mem2reg outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_mem2reg(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_mem_2_reg), 
+   .en(enable),
+   .dout(MEM_mem_2_reg)
+);
+
+// REG EXMEM_memwrite outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_memwrite(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_mem_write), 
+   .en(enable),
+   .dout(MEM_mem_write)
+);
+
+// REG EXMEM_regwrite outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_regwrite(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_reg_write), 
+   .en(enable),
+   .dout(MEM_reg_write)
+);
+
+// REG EXMEM_jump outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_jump(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_jump), 
+   .en(enable),
+   .dout(MEM_jump)
+);
+
+// REG EXMEM_PC outputs
 reg_arstn_en#(
    .DATA_W(64) // width of the forwarded signal
-)pc_pipe_EX_MEM(
+)EXMEM_PC(
    .clk (clk),
    .arst_n (arst_n),
-   .din (branch_EXMEM_pc),
+   .din (EX_pc), 
    .en(enable),
-   .dout(branch_pc)
+   .dout(MEM_pc)
 );
-// Instruction Reg
+
+// REG EXMEM_zero outputs
 reg_arstn_en#(
-   .DATA_W(38) // width of the forwarded signal
-)signal_pipe_EX_MEM(
+   .DATA_W(1) // width of the forwarded signal
+)EXMEM_zero(
    .clk (clk),
    .arst_n (arst_n),
-   // zero_flag,alu_out,instruction_ID_IX[89:74],instruction_ID_IX[4:0]
-   // from regfile_rdata_1,regfile_rdata_2,immediate_extended,instruction_IF_ID[30],instruction_IF_ID[25],instruction_IF_ID[14:12],instruction_IF_ID[11:7] (105:0)
-   .din ({zero_flag,alu_out,instruction_ID_IX[89:74],instruction_ID_IX[4:0]}),
+   .din (zero_flag), 
    .en(enable),
-   .dout(instruction_EX_MEM)
+   .dout(MEM_zero_flag)
+);
+
+// REG EXMEM_aluout outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)EXMEM_aluout(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (alu_out), 
+   .en(enable),
+   .dout(MEM_alu_out)
+);
+
+// REG EXMEM_readdata2 outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)EXMEM_readdata2(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_regfile_rdata_2), 
+   .en(enable),
+   .dout(MEM_regfile_rdata_2)
+);
+
+// REG EXMEM_waddr outputs
+reg_arstn_en#(
+   .DATA_W(5) // width of the forwarded signal
+)EXMEM_waddr(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_waddr), 
+   .en(enable),
+   .dout(MEM_waddr)
 );
 //EX_MEM REG END
+
+
+
+
+
 
 
 
@@ -311,50 +752,100 @@ reg_arstn_en#(
 sram_BW64 #(
    .ADDR_W(10)
 ) data_memory(
-   .clk      (clk            ),
-   .addr     (instruction_EX_MEM[36:21]        ),
-   .wen      (Reg_EXMEM_out[2]      ),
-   .ren      (Reg_EXMEM_out[4]       ),
-   .wdata    (instruction_EX_MEM[20:5] ),
-   .rdata    (mem_data       ),   
+   .clk      (clk),
+   .addr     (MEM_alu_out),
+   .wen      (MEM_mem_write),
+   .ren      (MEM_mem_read),
+   .wdata    (MEM_regfile_rdata_2),
+   .rdata    (MEM_mem_data       ),   
    .addr_ext (addr_ext_2     ),
    .wen_ext  (wen_ext_2      ),
    .ren_ext  (ren_ext_2      ),
    .wdata_ext(wdata_ext_2    ),
    .rdata_ext(rdata_ext_2    )
 );
-
 // MEM STAGE END
 
 
 
 
+
+
+
+
+
 // MEM_WB REG BEGIN
-// Control Reg
+// REG MEMWB_regdst outputs
 reg_arstn_en#(
-   .DATA_W(2) // width of the forwarded signal
-)control_pipe_MEM_WB(
+   .DATA_W(1) // width of the forwarded signal
+)MEMWB_regdst(
    .clk (clk),
    .arst_n (arst_n),
-   // mem_2_reg,reg_write
-   // from branch,mem_read,mem_2_reg,mem_write,reg_write,jump (5:0)
-   .din ({Reg_EXMEM_out[3], Reg_EXMEM_out[1]}),
+   .din (MEM_reg_dst),
    .en(enable),
-   .dout(Reg_MEMWB_out)
+   .dout(WB_reg_dst)
 );
-// Instruction Reg
+
+// REG MEMWB_mem2reg outputs
 reg_arstn_en#(
-   .DATA_W(85) // width of the forwarded signal
-)signal_pipe_MEM_WB(
+   .DATA_W(1) // width of the forwarded signal
+)MEMWB_mem2reg(
    .clk (clk),
    .arst_n (arst_n),
-   // mem_data,instruction_EX_MEM[36:21],instruction_EX_MEM[4:0]
-   // from zero_flag,alu_out,instruction_ID_IX[89:74],instruction_ID_IX[4:0] (37:0)
-   .din ({mem_data,instruction_EX_MEM[36:21],instruction_EX_MEM[4:0]}),
+   .din (MEM_mem_2_reg),
    .en(enable),
-   .dout(instruction_MEM_WB)
+   .dout(WB_mem_2_reg)
+);
+
+// REG MEMWB_regwrite outputs
+reg_arstn_en#(
+   .DATA_W(1) // width of the forwarded signal
+)MEMWB_regwrite(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (MEM_reg_write),
+   .en(enable),
+   .dout(WB_reg_write)
+);
+
+// REG MEMWB_mem_data outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)MEMWB_mem_data(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (MEM_mem_data),
+   .en(enable),
+   .dout(WB_mem_data)
+);
+
+// REG MEMWB_aluout outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)MEMWB_aluout(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (MEM_alu_out),
+   .en(enable),
+   .dout(WB_alu_out)
+);
+
+// REG MEMWB_waddr outputs
+reg_arstn_en#(
+   .DATA_W(5) // width of the forwarded signal
+)MEMWB_waddr(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (MEM_waddr),
+   .en(enable),
+   .dout(WB_waddr)
 );
 // MEM_WB REG END
+
+
+
+
+
 
 
 
@@ -363,13 +854,11 @@ reg_arstn_en#(
 mux_2 #(
    .DATA_W(64)
 ) regfile_data_mux (
-   .input_a  (instruction_MEM_WB[84:21]     ),
-   .input_b  (instruction_MEM_WB[20:5]      ),
-   .select_a (Reg_MEMWB_out[1]    ),
-   .mux_out  (regfile_wdata)
+   .input_a  (WB_mem_data),
+   .input_b  (WB_alu_out),
+   .select_a (WB_mem_2_reg),
+   .mux_out  (WB_regfile_wdata)
 );
 // WB STAGE END
 
 endmodule
-
-
