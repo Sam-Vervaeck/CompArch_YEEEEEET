@@ -182,6 +182,7 @@ begin
          $display("%c[1;34m",27);
          $display("Working Correctly: %s", ref_str[i]);
          $display("%c[0m",27);
+         debug_regfile();
       end else begin
          $display("%c[1;31m",27);
          $display("Error in test case: %s", ref_str[i]);
@@ -213,6 +214,7 @@ task test_mult_2;
       $display("%c[1;34m",27);
       $display("Mult2 Working Correctly");
       $display("%c[0m",27);
+      debug_regfile();
    end else begin
       $display("%c[1;31m",27);
       $display("Error in Mult2 function");
