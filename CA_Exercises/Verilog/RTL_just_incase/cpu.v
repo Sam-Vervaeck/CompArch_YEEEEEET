@@ -83,8 +83,10 @@ wire [      63:0] regfile_rdata_1,regfile_rdata_2;
 // Immediate extended unit outputs
 wire signed [63:0] immediate_extended;
 
-//Decode stage 
-reg         equal_flag;//used for the branch prediction which has been moved closer
+
+
+
+
 
 // REG IDEX_aluop outputs
 wire [       1:0] EX_alu_op;
@@ -112,6 +114,9 @@ wire           EX_reg_write;
 
 // REG IDEX_jump outputs
 wire           EX_jump;
+
+// REG IDEX_PC outputs
+wire  [63:0]   EX_pc; // for in EX
 
 // REG IDEX_readdata1 outputs
 wire [      63:0] EX_regfile_rdata_1;
@@ -170,6 +175,13 @@ wire  [4:0] EX_register_rs2;
 
 
 
+
+// REG EXMEM_Branch outputs
+wire   [      63:0]  MEM_branch_pc;
+
+// REG EXMEM_jump outputs
+wire   [      63:0]  MEM_jump_pc;
+
 // REG EXMEM_regdst outputs
 wire           MEM_reg_dst;
 
@@ -191,6 +203,8 @@ wire           MEM_reg_write;
 // REG EXMEM_jump outputs
 wire           MEM_jump;
 
+// REG EXMEM_PC outputs
+wire  [63:0]   MEM_pc; // for in MEM
 
 // REG EXMEM_zero outputs
 wire           MEM_zero_flag;
@@ -258,11 +272,11 @@ pc #(
 ) program_counter (
    .clk       (clk),
    .arst_n    (arst_n),
-   .branch_pc (branch_pc),
-   .jump_pc   (jump_pc),
-   .zero_flag (equal_flag),//(MEM_zero_flag), -- previous value
-   .branch    (branch),
-   .jump      (jump),// put the the stage earliers program counter
+   .branch_pc (MEM_branch_pc),//use to be branch_pc
+   .jump_pc   (MEM_jump_pc),//use to be jump_pc
+   .zero_flag (MEM_zero_flag),
+   .branch    (MEM_branch),
+   .jump      (MEM_jump),// put the the stage earliers program counter
    .current_pc(current_pc),
    .enable    (enable    ),
    .updated_pc(updated_pc)
@@ -356,27 +370,6 @@ immediate_extend_unit immediate_extend_u(
     .instruction         (ID_instruction),
     .immediate_extended  (immediate_extended)
 );
-
-//program counter and branch calculation
-branch_unit#(
-   .DATA_W(64)
-)branch_unit(
-   .updated_pc         (ID_pc),//from the decode register
-   .immediate_extended (immediate_extended),
-   .branch_pc          (branch_pc),
-   .jump_pc            (jump_pc)
-);
-
-always @(*) begin
-   // All of these are bitwise operations
-   if(regfile_rdata_1 ==regfile_rdata_2) begin
-      equal_flag =1'd1;
-   end
-   else begin
-      equal_flag =1'd0; 
-   end
-     
-end
 // ID Stage End
  
 
@@ -487,7 +480,16 @@ reg_arstn_en#(
    .dout(EX_jump)
 );
 
-
+// REG IDEX_PC outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)IDEX_PC(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (ID_pc),
+   .en(enable),
+   .dout(EX_pc)
+);
 
 // REG IDEX_readdata1 outputs
 reg_arstn_en#(
@@ -566,6 +568,11 @@ reg_arstn_en#(
    .dout(EX_waddr)
 );
 
+
+// .raddr_1  (ID_instruction[19:15]),
+//    .raddr_2  (ID_instruction[24:20]),
+//    .waddr    (WB_waddr),
+
 //Reg RS1 
 reg_arstn_en#(
    .DATA_W(5) // width of the forwarded signal
@@ -602,6 +609,14 @@ reg_arstn_en#(
 
 
 // EX STAGE BEGIN
+branch_unit#(
+   .DATA_W(64)
+)branch_unit(
+   .updated_pc         (EX_pc),
+   .immediate_extended (EX_immediate_extended),
+   .branch_pc          (branch_pc),
+   .jump_pc            (jump_pc)
+);
 
 
 mux_3 #(
@@ -678,6 +693,26 @@ forward_unit forwarding_unit(
 
 
 //EX_MEM REG BEGIN
+//branch PC and jump pc register 
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)EXMEM_branchPC(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (branch_pc), 
+   .en(enable),
+   .dout(MEM_branch_pc)
+);
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)EXMEM_jumpPC(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (jump_pc), 
+   .en(enable),
+   .dout(MEM_jump_pc)
+);
+
 
 
 // REG EXMEM_regdst outputs
@@ -757,7 +792,16 @@ reg_arstn_en#(
    .dout(MEM_jump)
 );
 
-
+// REG EXMEM_PC outputs
+reg_arstn_en#(
+   .DATA_W(64) // width of the forwarded signal
+)EXMEM_PC(
+   .clk (clk),
+   .arst_n (arst_n),
+   .din (EX_pc), 
+   .en(enable),
+   .dout(MEM_pc)
+);
 
 // REG EXMEM_zero outputs
 reg_arstn_en#(

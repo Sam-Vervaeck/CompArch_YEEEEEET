@@ -1,0 +1,41 @@
+ncverilog(64): 15.20-s058: (c) Copyright 1995-2018 Cadence Design Systems, Inc.
+TOOL:	ncverilog	15.20-s058: Started on May 25, 2023 at 21:11:32 CEST
+ncverilog
+	+sv
+	-f files_verilog.f
+		../Verilog/RTL/alu.v
+		../Verilog/RTL/alu_control.v
+		../Verilog/RTL/branch_unit.v
+		../Verilog/RTL/control_unit.v
+		../Verilog/RTL/cpu.v
+		../Verilog/RTL/immediate_extend_unit.v
+		../Verilog/RTL/mux_2.v
+		../Verilog/RTL/pc.v
+		../Verilog/RTL/reg_arstn.v
+		../Verilog/RTL/reg_arstn_en.v
+		../Verilog/RTL/register_file.v
+		../Verilog/RTL/sram.v
+		../Verilog/cpu_tb.v
+		../Verilog/sky130_sram_2rw.v
+		../Verilog/RTL/mux_3.v
+		../Verilog/RTL/forward_unit.v
+		../Verilog/RTL/hazard_detection_unit.v
+	+nc64bit
+	+nctimescale+1ns/10ps
+	+access+rwc
+	-ALLOWREDEFINITION
+Loading snapshot worklib.reg_arstn:v .................... Done
+ncsim: *W,DSEM2009: This SystemVerilog design is simulated as per IEEE 1800-2009 SystemVerilog simulation semantics. Use -disable_sem2009 option for turning off SV 2009 simulation semantics.
+ncsim> source /esat/micas-data/software/Cadence/incisiv_15.20.058/tools/inca/files/ncsimrc
+ncsim> run
+
+Start Execution
+
+[1;34m
+Mult4 Working Correctly
+[0m
+        704 cycles
+Simulation complete via $finish(1) at time 103560 NS + 0
+../Verilog/cpu_tb.v:326    $finish;
+ncsim> exit
+TOOL:	ncverilog	15.20-s058: Exiting on May 25, 2023 at 21:11:32 CEST  (total: 00:00:00)
